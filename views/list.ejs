@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <title>交易明細清單</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+
+    table {
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+    }
+
+    button.delete-all {
+      background-color: crimson;
+      color: white;
+    }
+
+    form {
+      margin: 0;
+    }
+
+    select,
+    input[type="text"],
+    button {
+      font-size: 14px;
+    }
+
+    button {
+      padding: 4px 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>交易明細清單</h1>
+ <% if (updated) { %>
+  <div id="success-message" style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+    ✅ 分類已成功更新！
+  </div>
+<% } %>
+
+
+
+  <form method="POST" action="/delete-all" onsubmit="return confirm('確定要刪除全部資料嗎？')">
+    <button type="submit" class="delete-all">全部刪除</button>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th>編號</th>
+        <th>交易日期</th>
+        <th>說明</th>
+        <th>金額</th>
+        <th>類別</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (transactions.length> 0) { %>
+        <% transactions.forEach(item=> { %>
+          <tr>
+            <td>
+              <%= item.編號 %>
+            </td>
+            <td>
+              <%= item.交易日期 %>
+            </td>
+            <td>
+              <%= item.說明 %>
+            </td>
+            <td>
+              <%= item.金額 %> 元
+            </td>
+            <td>
+              <form method="POST" action="/update-category/<%= item.編號 %>">
+                <div style="display: flex; gap: 4px;">
+                  <select name="category">
+                    <% categories.forEach(cat=> { %>
+                      <option value="<%= cat %>" <%=(item.類別 || '未分類' )===cat ? 'selected' : '' %>><%= cat %>
+                      </option>
+                      <% }) %>
+                  </select>
+                  <input type="text" name="customCategory" placeholder="自訂分類" style="width: 100px;">
+                  <button type="submit">✔</button>
+                </div>
+              </form>
+            </td>
+            <td>
+            <form method="POST" action="/delete/<%= item.編號 %>" onsubmit="return confirm('確定要刪除這筆交易嗎？')">
+              <button type="submit">刪除</button>
+            </form>
+            </td>
+
+
+          </tr>
+          <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="5">尚無交易資料</td>
+              </tr>
+              <% } %>
+    </tbody>
+  </table>
+
+  <p><a href="/">回首頁</a></p>
+  <script>
+  setTimeout(() => {
+    const msg = document.getElementById('success-message');
+    if (msg) {
+      msg.style.transition = 'opacity 0.5s ease';
+      msg.style.opacity = '0';
+      setTimeout(() => msg.remove(), 500); // 從 DOM 中移除
+    }
+  }, 3000);
+</script>
+
+</body>
+
+</html>

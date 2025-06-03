@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <title>消費分類統計</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+
+    canvas {
+      display: block;
+      max-width: 500px;
+      margin: 30px auto;
+    }
+
+    .center {
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="center">
+    <h1>📊 消費分類圓餅圖</h1>
+
+    <form method="GET" action="/analysis">
+  <label>起始日期：</label>
+  <input type="date" name="start" required>
+  <label>結束日期：</label>
+  <input type="date" name="end" required>
+  <button type="submit">查詢</button>
+</form>
+
+
+    <!-- 測試輸出 -->
+   
+    <p>以下是您在指定日期範圍內的消費分類統計：</p>
+
+<% if (start && end) { %>
+  <p>目前顯示：<strong><%= start %></strong> 到 <strong><%= end %></strong> 的消費分類統計</p>
+<% } else { %>
+  <p>目前顯示：<strong>全部日期</strong> 的消費分類統計</p>
+<% } %>
+    <p>類別數量：<strong><%= data.length %></strong></p>
+    <p>總金額：<strong><%= data.reduce((sum, val) => sum + val, 0) %></strong></p>
+
+    <canvas id="pieChart" width="400" height="400"></canvas>
+    <h3>分類清單：</h3>
+<ul>
+  <% labels.forEach((label, i) => { %>
+    <li>
+      <%= label %>（共 <%= data[i] %> 元）
+      -<a href="/category/<%= labels[i] %>?from=<%= from %>">查看交易</a>
+    </li>
+  <% }) %>
+</ul>
+
+
+    <p><a href="/">回首頁</a></p>
+  </div>
+
+  <!-- 放在 body 最後，確保 DOM 已加載 -->
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const labels = JSON.parse('<%- JSON.stringify(labels) %>');
+    const data = JSON.parse('<%- JSON.stringify(data) %>');
+
+
+
+    const backgroundColor = labels.map((_, i) => {
+      const hue = Math.floor(360 * i / labels.length);
+      return `hsl(${hue}, 70%, 60%)`;
+    });
+
+    const ctx = document.getElementById('pieChart').getContext('2d');
+
+    if (labels.length > 0 && data.length > 0) {
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: backgroundColor
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const value = context.parsed;
+                  const total = context.chart._metasets[0].total;
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${context.label}: ${value} 元 (${percentage}%)`;
+                }
+              }
+            },
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    } else {
+      ctx.font = "16px Arial";
+      ctx.fillText("無資料可顯示圖表", 100, 100);
+    }
+  </script>
+  
+</body>
+
+</html>
