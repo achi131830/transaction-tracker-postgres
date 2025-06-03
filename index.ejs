@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>交易明細記錄</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+        }
+
+        label {
+            display: inline-block;
+            width: 80px;
+            margin-top: 10px;
+        }
+
+        input,
+        select,
+        button {
+            margin-top: 10px;
+        }
+
+        form {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>新增交易明細</h1>
+
+    <form method="POST" action="/add">
+        <label for="date">交易日期：</label>
+        <input type="date" name="date" id="date" required><br>
+
+        <label for="description">說明：</label>
+        <input type="text" name="description" placeholder="請輸入交易內容" required><br>
+
+        <label for="amount">金額：</label>
+        <input type="number" name="amount" id="amount" placeholder="請輸入金額" step="any" inputmode="decimal"><br>
+
+        <label for="category">類別：</label>
+        <input type="text" name="category" placeholder="例如：飲食、交通、購物"><br>
+
+        <input type="hidden" name="is_shared" value="0">
+
+        <label>共用交易：</label>
+        <input type="checkbox" name="is_shared" value="1">（勾選表示共用，未勾選則為私人）<br>
+
+        <button type="submit">送出</button>
+    </form>
+
+    <h2>查詢總金額</h2>
+
+    <form method="POST" action="/query">
+        <label for="range">查詢範圍：</label>
+        <select name="range" id="range" onchange="toggleCustomDates()">
+            <option value="week" <%=selectedRange==='week' ? 'selected' : '' %>>近一週</option>
+            <option value="month" <%=selectedRange==='month' ? 'selected' : '' %>>近一月</option>
+            <option value="year" <%=selectedRange==='year' ? 'selected' : '' %>>近一年</option>
+            <option value="custom" <%=selectedRange==='custom' ? 'selected' : '' %>>自訂範圍</option>
+        </select><br>
+
+        <div id="custom-dates" style="display: none; margin-top: 8px;">
+            <label>起始日：</label>
+            <input type="date" name="start">
+            <label>結束日：</label>
+            <input type="date" name="end">
+        </div>
+
+        <button type="submit">查詢</button>
+    </form>
+
+    <script>
+        function toggleCustomDates() {
+            const range = document.getElementById('range').value;
+            document.getElementById('custom-dates').style.display = (range === 'custom') ? 'block' : 'none';
+        }
+
+        // 若使用者選過 custom，讓畫面重新載入時也顯示自訂欄位
+        document.addEventListener('DOMContentLoaded', toggleCustomDates);
+    </script>
+
+    <% if (total !==null) { %>
+        <% } %>
+
+            <h3>總金額：<%= total %> 元</h3>
+
+            <form action="/budget" method="GET">
+                <button type="submit">設定月度預算</button>
+            </form>
+
+            <form action="/analysis" method="GET">
+                <button type="submit">查看消費分析圓餅圖</button>
+            </form>
+            <form action="/partner" method="GET">
+                <button type="submit">雙人專區</button>
+            </form>
+
+
+            <script>
+                // 自動填入今天日期
+                document.addEventListener("DOMContentLoaded", function () {
+                    const today = new Date();
+                    const yyyy = today.getFullYear();
+                    const mm = String(today.getMonth() + 1).padStart(2, '0');
+                    const dd = String(today.getDate()).padStart(2, '0');
+                    document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
+                });
+
+                // 當使用者按上下箭頭時，每次金額加減 10
+                document.getElementById('amount').addEventListener('keydown', function (e) {
+                    const input = this;
+                    let value = parseFloat(input.value || 0);
+                    if (e.key === 'ArrowUp') {
+                        input.value = (value + 10).toFixed(2);
+                        e.preventDefault();
+                    } else if (e.key === 'ArrowDown') {
+                        input.value = (value - 10).toFixed(2);
+                        e.preventDefault();
+                    }
+                });
+            </script>
+
+            <p><a href="/list">查看交易清單 →</a></p>
+            <form action="/logout" method="GET">
+                <button type="submit">登出</button>
+            </form>
+
+
+</body>
+
+</html>
