@@ -41,7 +41,6 @@
     }
   </style>
 </head>
-<h2>testtestetst</h2>
 <body>
   <h1>交易明細清單</h1>
  <% if (updated) { %>
@@ -72,7 +71,7 @@
         <% transactions.forEach(item=> { %>
           <tr>
             <td>
-              <%= item.編號 %>
+              <%= item.id %>
             </td>
             <td>
               <%= item.交易日期 %>
@@ -84,7 +83,7 @@
               <%= item.金額 %> 元
             </td>
             <td>
-              <form method="POST" action="/update-category/<%= item.編號 %>">
+              <form method="POST" action="/update-category/<%= item.id %>">
                 <div style="display: flex; gap: 4px;">
                   <select name="category">
                     <% categories.forEach(cat=> { %>
@@ -98,7 +97,7 @@
               </form>
             </td>
             <td>
-            <form method="POST" action="/delete/<%= item.編號 %>" onsubmit="return confirm('確定要刪除這筆交易嗎？')">
+            <form method="POST" action="/delete/<%= item.id %>" onsubmit="return confirm('確定要刪除這筆交易嗎？')">
               <button type="submit">刪除</button>
             </form>
             </td>
