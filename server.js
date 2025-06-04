@@ -139,6 +139,7 @@ app.post('/add', (req, res) => {
 // 交易清單頁面
 app.get('/list', (req, res) => {
   const userId = req.session.userId;
+console.log("目前 session.userId 是：", req.session.userId);
 
   pool.query(
     `SELECT * FROM "交易明細" WHERE user_id = $1 ORDER BY 交易日期 DESC`,
@@ -445,7 +446,6 @@ app.use(session({
 }));
 
 // 顯示登入頁面
-// 顯示登入頁面
 app.get('/login', (req, res) => {
   res.render('login', { error: null });
 });
@@ -466,7 +466,7 @@ app.post('/login', (req, res) => {
 
       if (!match) return res.send("帳號或密碼錯誤");
 
-      req.session.userId = user.id;
+      req.session.userId =result.rows[0].id;
       res.redirect("/");
     }
   );
