@@ -31,39 +31,39 @@ app.get('/', (req, res) => {
   const today = new Date();
   const yearMonth = today.toISOString().slice(0, 7);
   pool.query(`SELECT * FROM "交易明細" WHERE user_id = $1 ORDER BY 交易日期 DESC`, [req.session.userId], (err1, result1) => {
-  if (err1) {
-    console.error(err1.message);
-    return res.send("讀取失敗");
-  }
-
-  const rows = result1.rows;
-
-  pool.query(
-    `SELECT SUM(金額) AS total FROM "交易明細" WHERE substr(交易日期, 1, 7) = $1 AND user_id = $2`,
-    [yearMonth, req.session.userId],
-    (err2, result2) => {
-      const total = result2?.rows?.[0]?.total || 0;
-
-      pool.query(
-        `SELECT 預算上限 FROM "月度預算" WHERE 年月 = $1 AND user_id = $2`,
-        [yearMonth, req.session.userId],
-        (err3, result3) => {
-          const limit = result3?.rows?.[0]?.預算上限 || null;
-          const overBudget = limit !== null && total > limit;
-
-          res.render('index', {
-            total,
-            limit,
-            overBudget,
-            selectedRange: null,
-            transactions: rows
-          });
-        }
-      );
+    if (err1) {
+      console.error(err1.message);
+      return res.send("讀取失敗");
     }
-  );
-});
-;
+
+    const rows = result1.rows;
+
+    pool.query(
+      `SELECT SUM(金額) AS total FROM "交易明細" WHERE substr(交易日期, 1, 7) = $1 AND user_id = $2`,
+      [yearMonth, req.session.userId],
+      (err2, result2) => {
+        const total = result2?.rows?.[0]?.total || 0;
+
+        pool.query(
+          `SELECT 預算上限 FROM "月度預算" WHERE 年月 = $1 AND user_id = $2`,
+          [yearMonth, req.session.userId],
+          (err3, result3) => {
+            const limit = result3?.rows?.[0]?.預算上限 || null;
+            const overBudget = limit !== null && total > limit;
+
+            res.render('index', {
+              total,
+              limit,
+              overBudget,
+              selectedRange: null,
+              transactions: rows
+            });
+          }
+        );
+      }
+    );
+  });
+  ;
 });
 
 // 新增資料
@@ -453,10 +453,34 @@ app.get('/login', (req, res) => {
 // 處理登入請求
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
+  pool.query(
+    `SELECT * FROM "使用者" WHERE 帳號 = $1`,
+    [username],
+    async (err, result) => {
+      if (err || result.rows.length === 0) {
+        return res.send("帳號或密碼錯誤");
+      }
+
+      const user = result.rows[0];
+      const match = await bcrypt.compare(password, user.密碼);
+
+      if (!match) return res.send("帳號或密碼錯誤");
+
+      req.session.userId = user.id;
+      res.redirect("/");
+    }
+  );
+
+});
+
+
+// 處理登入請求
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
 
   pool.query(
     `SELECT * FROM "使用者" WHERE 帳號 = $1 AND 密碼 = $2`,
-    [username, password],
+    [account, password],
     (err, result) => {
       if (err) {
         console.error("登入查詢失敗：", err.message);
@@ -471,30 +495,6 @@ app.post('/login', (req, res) => {
       res.redirect("/");
     }
   );
-});
-
-
-// 處理登入請求
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-
-  pool.query(
-  `SELECT * FROM "使用者" WHERE 帳號 = $1 AND 密碼 = $2`,
-  [account, password],
-  (err, result) => {
-    if (err) {
-      console.error("登入查詢失敗：", err.message);
-      return res.send("登入失敗");
-    }
-
-    if (result.rows.length === 0) {
-      return res.send("帳號或密碼錯誤");
-    }
-
-    req.session.userId = result.rows[0].id;
-    res.redirect("/");
-  }
-);
 });
 
 // 登出功能
@@ -636,31 +636,31 @@ app.post('/add-aa', (req, res) => {
     const half = Math.round(Number(amount) / 2); // 平分並四捨五入
 
     db.serialize(() => {
-  db.run(
-    `INSERT INTO 交易明細 (交易日期, 說明, 金額, 類別, user_id, is_shared) VALUES (?, ?, ?, ?, ?, ?)`,
-    [date, description, half, category, userId, 1]
-  );
+      db.run(
+        `INSERT INTO 交易明細 (交易日期, 說明, 金額, 類別, user_id, is_shared) VALUES (?, ?, ?, ?, ?, ?)`,
+        [date, description, half, category, userId, 1]
+      );
 
-  db.run(
-    `INSERT INTO 交易明細 (交易日期, 說明, 金額, 類別, user_id, is_shared) VALUES (?, ?, ?, ?, ?, ?)`,
-    [date, description, amount - half, category, partnerId, 1],
-    err2 => {
-      if (err2) {
-        console.error("❌ 寫入交易失敗：", err2.message);
-        return res.send("交易記錄失敗");
-      }
-      res.render('partner', {
-        userId,
-        partnerId,
-        isMutual: true,
-        message: "✅ 新增成功！"
-      });
-    }
-  );
-});
+      db.run(
+        `INSERT INTO 交易明細 (交易日期, 說明, 金額, 類別, user_id, is_shared) VALUES (?, ?, ?, ?, ?, ?)`,
+        [date, description, amount - half, category, partnerId, 1],
+        err2 => {
+          if (err2) {
+            console.error("❌ 寫入交易失敗：", err2.message);
+            return res.send("交易記錄失敗");
+          }
+          res.render('partner', {
+            userId,
+            partnerId,
+            isMutual: true,
+            message: "✅ 新增成功！"
+          });
+        }
+      );
     });
-
   });
+
+});
 
 // 共同分析頁面
 app.get('/category/:name', (req, res) => {
