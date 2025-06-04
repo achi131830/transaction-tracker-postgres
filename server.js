@@ -445,9 +445,34 @@ app.use(session({
 }));
 
 // 顯示登入頁面
+// 顯示登入頁面
 app.get('/login', (req, res) => {
   res.render('login', { error: null });
 });
+
+// 處理登入請求
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  pool.query(
+    `SELECT * FROM "使用者" WHERE 帳號 = $1 AND 密碼 = $2`,
+    [username, password],
+    (err, result) => {
+      if (err) {
+        console.error("登入查詢失敗：", err.message);
+        return res.send("登入失敗");
+      }
+
+      if (result.rows.length === 0) {
+        return res.send("帳號或密碼錯誤");
+      }
+
+      req.session.userId = result.rows[0].id;
+      res.redirect("/");
+    }
+  );
+});
+
 
 // 處理登入請求
 app.post('/login', (req, res) => {
