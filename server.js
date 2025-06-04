@@ -424,17 +424,18 @@ app.post('/register', async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
 
   pool.query(
-  `INSERT INTO "使用者" (帳號, 密碼) VALUES ($1, $2)`,
-  [account, password],
-  (err, result) => {
-    if (err) {
-      console.error("註冊錯誤：", err.message);
-      return res.send("註冊失敗");
+    `INSERT INTO "使用者" (帳號, 密碼) VALUES ($1, $2)`,
+    [username, hashedPassword],
+    (err, result) => {
+      if (err) {
+        console.error("註冊錯誤：", err.message);
+        return res.send("註冊失敗");
+      }
+      res.redirect("/login");
     }
-    res.redirect("/login");
-  }
-);
+  );
 });
+
 
 // 啟用 session
 app.use(session({
