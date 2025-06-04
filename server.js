@@ -145,10 +145,10 @@ app.get('/list', (req, res) => {
     [userId],
     (err, result) => {
       if (err) {
-        console.error("❌ 讀取清單失敗：", err.message);
-        return res.send("查詢失敗");
+        console.error("讀取交易失敗：", err.message);
+        return res.send("讀取失敗");
       }
-      res.render('list', { transactions: result.rows });
+      res.render("list", { rows: result.rows });
     }
   );
 });
