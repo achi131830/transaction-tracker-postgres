@@ -148,7 +148,7 @@ app.get('/list', (req, res) => {
         console.error("讀取交易失敗：", err.message);
         return res.send("讀取失敗");
       }
-      res.render("list", { rows: result.rows });
+      res.render("list", { transactions: result.rows });
     }
   );
 });
